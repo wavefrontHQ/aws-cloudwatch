@@ -54,10 +54,10 @@ aws_metrics.json.conf file contains the configuration for this script.  The form
 Add one configuration object and key for each metric to be collected.  The key can be a regular expression matching more than one metric.  Metric names are determined by converting the namespace to lowercase and replacing "/" with ".".
 
 The configuration object has the following supported attributes:
-|Attribute Name|Type|Description|
-|--------------|----|-----------|
-|stats         |array of strings|A list of stats to collect.  Allowed values include: 'Average', 'Minimum', 'Maximum', 'Sum', 'SampleCount'.|
-|'priority'| number | Optional.  Priority of this configuration.  Only used when there are multiple matches for the same configuration name|
+| Attribute Name | Type | Description |
+| -------------- | ---- | ----------- |
+| stats         | array of strings| A list of stats to collect.  Allowed values include: 'Average', 'Minimum', 'Maximum', 'Sum', 'SampleCount'. |
+| 'priority' |  number | Optional.  Priority of this configuration.  Only used when there are multiple matches for the same configuration name |
 
 
 
@@ -73,9 +73,13 @@ Modify the crontab for the user that will be running the script
 ```$ crontab -e```
 
 To run the script every minute, copy this into the first line and save
-```* * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
+```
+* * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single
+```
 
 or to run every 2 minutes use:
-```*/2 * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
+```
+*/2 * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single
+```
 
-(Be sure to change '<PATH TO EXTRACTED FILES>’ to the path where you extracted the files from our last email.)
+(Be sure to change `<PATH TO EXTRACTED FILES>` to the path where you extracted the files from our last email.)
