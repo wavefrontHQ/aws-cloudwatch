@@ -28,10 +28,12 @@ or
 
   (If you don’t have `pip` you can install it with: `$ sudo apt-get install python-pip`)
 
-2. Setup your AWS credentials.   Create a file in ~/.aws.credentials that looks like this:
+2. Setup your AWS credentials.   Create a file in `~/.aws.credentials` that looks like this:
+```
 [default]
-aws_access_key_id=<YOUR ACCESS KEY ID>
-aws_secret_access_key=<YOUR SECRET KEY>
+aws_access_key_id=&lt;YOUR ACCESS KEY ID&gt;
+aws_secret_access_key=&lt;YOUR SECRET KEY&gt;
+```
 
 # Configuration
 aws_metrics.json.conf file contains the configuration for this script.  The format looks like this:
@@ -60,20 +62,20 @@ The configuration object has the following supported attributes:
 
 
 # Run
-./wavefront.py aws-metrics --config ./aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single
+`./wavefront.py aws-metrics --config ./aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single`
 
 This will connect to the AWS API, grab the metrics including all the stats configured in the configuration file and then send those to the proxy listening on port 2878.
 
 # Run on a Regular Schedule
-The script is designed to be run by cron.  Add an entry to your wavefront user’s crontab to run as often as you like.
+The script is designed to be run by cron.  Add an entry to your crontab to run as often as you like.
 
 Modify the crontab for the user that will be running the script
-`$ crontab -e`
+```$ crontab -e```
 
 To run the script every minute, copy this into the first line and save
-`* * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single`
+```* * * * * &lt;PATH TO EXTRACTED FILES&gt;/wavefront.py aws-metrics --config &lt;PATH TO EXTRACTED FILES&gt;/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
 
 or to run every 2 minutes use:
-`*/2 * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single`
+```*/2 * * * * &lt;PATH TO EXTRACTED FILES&gt;/wavefront.py aws-metrics --config &lt;PATH TO EXTRACTED FILES&gt;/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
 
-(Be sure to change '<PATH TO EXTRACTED FILES>’ to the path where you extracted the files from our last email.)
+(Be sure to change '&lt;PATH TO EXTRACTED FILES&gt;’ to the path where you extracted the files from our last email.)
