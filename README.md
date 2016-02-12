@@ -31,8 +31,8 @@ or
 2. Setup your AWS credentials.   Create a file in `~/.aws.credentials` that looks like this:
 ```
 [default]
-aws_access_key_id=&lt;YOUR ACCESS KEY ID&gt;
-aws_secret_access_key=&lt;YOUR SECRET KEY&gt;
+aws_access_key_id=<YOUR ACCESS KEY ID>
+aws_secret_access_key=<YOUR SECRET KEY>
 ```
 
 # Configuration
@@ -73,9 +73,9 @@ Modify the crontab for the user that will be running the script
 ```$ crontab -e```
 
 To run the script every minute, copy this into the first line and save
-```* * * * * &lt;PATH TO EXTRACTED FILES&gt;/wavefront.py aws-metrics --config &lt;PATH TO EXTRACTED FILES&gt;/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
+```* * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
 
 or to run every 2 minutes use:
-```*/2 * * * * &lt;PATH TO EXTRACTED FILES&gt;/wavefront.py aws-metrics --config &lt;PATH TO EXTRACTED FILES&gt;/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
+```*/2 * * * * <PATH TO EXTRACTED FILES>/wavefront.py aws-metrics --config <PATH TO EXTRACTED FILES>/aws_metrics.json.conf --proxy localhost:2878 —no-suffix-for-single```
 
-(Be sure to change '&lt;PATH TO EXTRACTED FILES&gt;’ to the path where you extracted the files from our last email.)
+(Be sure to change '<PATH TO EXTRACTED FILES>’ to the path where you extracted the files from our last email.)
