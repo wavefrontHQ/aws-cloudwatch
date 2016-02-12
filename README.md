@@ -1,5 +1,7 @@
 # Overview
-This module calls the AWS [ListMetrics()](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) API followed by multiple calls to [GetMetricStatistics()](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html) to get metrics from AWS.
+This script calls the AWS [ListMetrics()](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) API followed by multiple calls to [GetMetricStatistics()](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html) to get metrics from AWS.
+
+The primary purpose of this script is to retrieve more statistics for a given metric than are currently obtained via the external integration.
 
 A dictionary configured by the 'metrics' key in the configuration file is
 used to determine which metrics should lead to a call to GetMetricStatistics().
@@ -16,7 +18,7 @@ determine the appropriate start time.  If no configuration file is found,
 the start time is determined by subtracting the delay_minutes from the 
 current time.
 
-This script should be run by cron on a regular schedule.  See details below for more information.
+This should be run by cron on a regular schedule.  See details below for more information.
 
 # Installation
 1. This script is written in Python and relies on the boto3 package.  You’ll need to install that package before running.  You can do that with this command:
@@ -24,7 +26,7 @@ This script should be run by cron on a regular schedule.  See details below for 
 or
 ```$ sudo pip install boto3```
 
-(If you don’t have `pip` you can install it with: `$ sudo apt-get install python-pip`)
+  (If you don’t have `pip` you can install it with: `$ sudo apt-get install python-pip`)
 
 2. Setup your AWS credentials.   Create a file in ~/.aws.credentials that looks like this:
 [default]
