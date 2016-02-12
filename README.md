@@ -54,6 +54,7 @@ aws_metrics.json.conf file contains the configuration for this script.  The form
 Add one configuration object and key for each metric to be collected.  The key can be a regular expression matching more than one metric.  Metric names are determined by converting the namespace to lowercase and replacing "/" with ".".
 
 The configuration object has the following supported attributes:
+
 | Attribute Name | Type | Description |
 | -------------- | ---- | ----------- |
 | stats         | array of strings| A list of stats to collect.  Allowed values include: 'Average', 'Minimum', 'Maximum', 'Sum', 'SampleCount'. |
