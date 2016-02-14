@@ -22,8 +22,8 @@ run this script every 5 minutes add this to your crontab:
 */5 * * * * /path/to/script.py
 """
 
-import command
 import argparse
+import command
 import boto3
 import datetime
 import dateutil
@@ -71,9 +71,43 @@ stat_short_name = {
     'SampleCount': 'count'
 }
 
-# delay minutes is the default number of minutes this script delays between
-# each run
-delay_minutes = 5
+# Wavefront Proxy context manager for managing the socket connection to proxy
+class WavefrontProxy(object):
+    def __init__(self, host, port, dry_run = False):
+        super(WavefrontProxy, self).__init__()
+        self.is_dry_run = dry_run
+        self.host = host
+        self.port = port
+        self.sock = None
+
+    def transmit_metric(self, name, value, ts, source, point_tags):
+        """
+        Transmit metric to the proxy
+        """
+
+        line = '{} {} {} source={}'.format(name, value, ts, source)
+        if point_tags is not None:
+            for k, v in point_tags.iteritems():
+                line = line + ' {}={}'.format(k, v)
+
+        if self.is_dry_run:
+            print '[{}:{}] {}'.format(self.host, self.port, line)
+
+        else:
+            self.sock.sendall('%s\n' % line)
+
+    def __enter__(self):
+        if not self.is_dry_run:
+            self.sock = socket.socket()
+            self.sock.connect((self.host, self.port))
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.sock is not None and not self.is_dry_run:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
+
 
 class AwsMetricsCommand(command.Command):
     def __init__(self, **kwargs):
@@ -83,6 +117,9 @@ class AwsMetricsCommand(command.Command):
         self.proxy_host = '127.0.0.1'
         self.proxy_port = 2878
         self.has_suffix_for_single_stat = True
+        # delay minutes is the number of minutes of data to request the first
+        # time this is run (subsequent runs will use the last run timestamp
+        # in the configuration file)
         self.default_delay_minutes = 5
         self.metric_name_prefix = ''
         self.aws_client = None
@@ -173,26 +210,6 @@ class AwsMetricsCommand(command.Command):
         self.roleARN = a.role_arn
         self.roleSessionName = a.role_session_name
 
-    def transmit_metric(self, name, value, ts, source, point_tags):
-        """
-        Transmit metric to the proxy
-        TODO: move this to a shared library
-        """
-
-        line = '{} {} {} source={} '.format(name, value, ts, source)
-        if point_tags is not None:
-            for k, v in point_tags.iteritems():
-                line = line + '{}={} '.format(k, v)
-
-        if self.is_dry_run:
-            print '[{}:{}] {}'.format(self.proxy_host, self.proxy_port, line)
-
-        else:
-            sock = socket.socket()
-            sock.connect((self.proxy_host, self.proxy_port))
-            sock.sendall('%s\n' % line)
-            sock.close()
-
     def get_configuration(self, namespace, metric_name):
         """
         Given a namespace and metric, get the configuration
@@ -246,42 +263,45 @@ class AwsMetricsCommand(command.Command):
         :param end: the end time
         """
 
-        for m in metrics:
-            metric_name = '{}.{}'.format(m['Namespace'].lower().replace('/', '.'),
-                                         m['MetricName'].lower())
-            point_tags = {'Namespace': m['Namespace']}
-            for d in m['Dimensions']:
-                point_tags[d['Name']] = d['Value']
-            config = self.get_configuration(m['Namespace'], m['MetricName'])
-            if config is None or len(config['stats']) == 0:
-                continue
+        with WavefrontProxy(self.proxy_host, self.proxy_port, self.is_dry_run) as wf_proxy:
+            for m in metrics:
+                metric_name = '{}.{}'.format(m['Namespace'].lower().replace('/', '.'),
+                                             m['MetricName'].lower())
+                point_tags = {'Namespace': m['Namespace']}
+                for d in m['Dimensions']:
+                    point_tags[d['Name']] = d['Value']
 
-            stats = self.aws_client.get_metric_statistics(
-                Namespace = m['Namespace'],
-                MetricName = m['MetricName'],
-                StartTime = start,
-                EndTime = end,
-                Period = 60,
-                Statistics = config['stats'])
-            source = self._get_source(config, point_tags, m['Dimensions'])
-            if not source:
-                logger.warning('Source is not found in %s', m)
-                continue
+                config = self.get_configuration(m['Namespace'], m['MetricName'])
+                if config is None or len(config['stats']) == 0:
+                    continue
 
-            number_of_stats = len(config['stats'])
-            for stat in stats['Datapoints']:
-                for s in config['stats']:
-                    short_name = stat_short_name[s]
-                    if number_of_stats == 1 and self.has_suffix_for_single_stat:
-                        full_metric_name = metric_name
-                    else:
-                        full_metric_name = metric_name + '.' + short_name
+                stats = self.aws_client.get_metric_statistics(
+                    Namespace = m['Namespace'],
+                    MetricName = m['MetricName'],
+                    StartTime = start,
+                    EndTime = end,
+                    Period = 60,
+                    Statistics = config['stats'])
+                source = self._get_source(config, point_tags, m['Dimensions'])
+                if not source:
+                    logger.warning('Source is not found in %s', m)
+                    continue
 
-                    self.transmit_metric(self.metric_name_prefix + full_metric_name,
-                                         stat[s],
-                                         command.unix_time_millis(stat['Timestamp']),
-                                         source,
-                                         point_tags)
+                number_of_stats = len(config['stats'])
+                for stat in stats['Datapoints']:
+                    for s in config['stats']:
+                        short_name = stat_short_name[s]
+                        if number_of_stats == 1 and self.has_suffix_for_single_stat:
+                            full_metric_name = metric_name
+                        else:
+                            full_metric_name = metric_name + '.' + short_name
+
+                        wf_proxy.transmit_metric(
+                            self.metric_name_prefix + full_metric_name,
+                            stat[s],
+                            command.unix_time_millis(stat['Timestamp']),
+                            source,
+                            point_tags)
 
     def get_help_text(self):
         return "Pull metrics from AWS CloudWatch and push them into Wavefront"
@@ -292,24 +312,14 @@ class AwsMetricsCommand(command.Command):
         """
 
         if self.roleARN is not None:
-            # assume the customerSuccess role
+            # assume role (for testing internally)
             c = boto3.client('sts')
-            #r = c.assume_role(
-            #    RoleArn = 'arn:aws:iam::301213811993:role/customerSuccess',
-            #    RoleSessionName = 'CustomerSuccessSession')
-            #s = boto3.Session(r['Credentials']['AccessKeyId'],
-            #                  r['Credentials']['SecretAccessKey'],
-            #                  r['Credentials']['SessionToken'])
-
-            # customer success should be able to assume the role of the
-            # wavefront external intergration user
-            #c = s.client('sts')
-            r2 = c.assume_role(
+            r = c.assume_role(
                 RoleArn = self.roleARN,
                 RoleSessionName = self.roleSessionName)
-            s = boto3.Session(r2['Credentials']['AccessKeyId'],
-                              r2['Credentials']['SecretAccessKey'],
-                              r2['Credentials']['SessionToken'])
+            s = boto3.Session(r['Credentials']['AccessKeyId'],
+                              r['Credentials']['SecretAccessKey'],
+                              r['Credentials']['SessionToken'])
             self.aws_client = s.client('cloudwatch')
 
         else:
