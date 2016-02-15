@@ -85,10 +85,10 @@ class WavefrontProxy(object):
         Transmit metric to the proxy
         """
 
-        line = '{} {} {} source={}'.format(name, value, ts, source)
+        line = '{} {} {} source="{}"'.format(name, value, ts, source)
         if point_tags is not None:
             for k, v in point_tags.iteritems():
-                line = line + ' {}={}'.format(k, v)
+                line = line + ' "{}"="{}"'.format(k, v)
 
         if self.is_dry_run:
             print '[{}:{}] {}'.format(self.host, self.port, line)
